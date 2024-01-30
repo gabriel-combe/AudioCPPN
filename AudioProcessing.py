@@ -3,7 +3,6 @@ import numpy as np
 
 def extractAudio(audiopath: str) -> np.ndarray:
     sound, fs = torchaudio.load(audiopath)
-    print(sound.shape)
     sound = sound.numpy()[0, :]
 
     if fs != 44100:
