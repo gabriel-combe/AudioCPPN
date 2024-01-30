@@ -13,8 +13,8 @@ class AudioDataset(Dataset):
         self.features = []
 
         self.xx, self.yy = np.meshgrid(np.linspace(-1, 1, self.width), np.linspace(-1, 1, self.height))
-        # self.zz = np.sqrt(self.xx**2 + self.yy**2)
-        self.zz = np.cos(self.xx) + np.sin(self.yy)
+        self.zz = np.sqrt(self.xx**2 + self.yy**2)
+        # self.zz = np.cos(self.xx) + np.sin(self.yy)
 
         self.coordmat = np.zeros((3+amplitudes.shape[1], self.height, self.width))
         self.coordmat[:3] = [self.yy, self.xx, self.zz]
