@@ -21,3 +21,7 @@ class CPPN(nn.Module):
             x = self.activation(layer(x))
         
         return (1.0 + x)/2.0
+
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        nn.init.uniform_(m.weight)

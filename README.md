@@ -7,6 +7,7 @@ Run the AudioCPPN.py file to start the generation
 
 > This is a WIP project, I am transitionning to pytorch for GPU computing.
 > The project is not working for know (gray image output)
+> Need to add argument parser
 
 ## Meta
 
