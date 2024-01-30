@@ -6,22 +6,18 @@ class CPPN(nn.Module):
         super(CPPN, self).__init__()
         self.device = device
 
-        self.linearLayers = [nn.Linear(3 + amplitudesSize, hsize, bias=False, device=self.device)]
-
-        for layer in range(1,nlayers-1):
-            self.linearLayers.append(nn.Linear(hsize, hsize, bias=False, device=self.device))
-        
-        self.linearLayers.append(nn.Linear(hsize, outputSize, bias=False, device=self.device))
+        self.linearLayers = nn.ModuleList([nn.Linear(3 + amplitudesSize, hsize, bias=False)])
+        self.linearLayers.extend([nn.Linear(hsize, hsize, bias=False) for _ in range(1, nlayers-1)])
+        self.linearLayers.append(nn.Linear(hsize, outputSize, bias=False))
 
         self.activation = nn.Tanh()
     
     def forward(self, x):
-        print(x.shape)
         for layer in self.linearLayers:
             x = self.activation(layer(x))
         
-        return (1.0 + x)/2.0
+        return 255.0 * (1.0 + x)/2.0
 
 def init_weights(m):
     if isinstance(m, nn.Linear):
-        nn.init.uniform_(m.weight)
+        nn.init.normal_(m.weight)

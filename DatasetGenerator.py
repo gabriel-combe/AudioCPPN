@@ -12,8 +12,14 @@ class AudioDataset(Dataset):
 
         self.features = []
 
-        self.rowmat = np.tile(np.linspace(-1, 1, self.height), self.width).reshape(self.width, self.height).T
-        self.colmat = np.tile(np.linspace(-1, 1, self.width), self.height).reshape(self.height, self.width)
+        self.xx, self.yy = np.meshgrid(np.linspace(-1, 1, self.width), np.linspace(-1, 1, self.height))
+        # self.zz = np.sqrt(self.xx**2 + self.yy**2)
+        self.zz = np.cos(self.xx) + np.sin(self.yy)
+
+        self.coordmat = np.zeros((3+amplitudes.shape[1], self.height, self.width))
+        self.coordmat[:3] = [self.yy, self.xx, self.zz]
+        self.coordmat = self.coordmat.transpose(1, 2, 0)
+        self.coordmat = self.coordmat.reshape(-1, self.coordmat.shape[2])
 
         feature = amplitudes[0, :]
 
@@ -26,12 +32,8 @@ class AudioDataset(Dataset):
         return self.size
 
     def __getitem__(self, index):
-        fmaps = [f*np.ones(self.rowmat.shape) for f in self.features[index]]
-        inputs = [self.rowmat, self.colmat, np.sqrt(np.power(self.rowmat, 2)+np.power(self.colmat, 2))]
-        inputs.extend(fmaps)
+        
+        self.coordmat[:, 3:] = self.features[index]
 
-        coordmat = np.stack(inputs).transpose(1, 2, 0)
-        coordmat = coordmat.reshape(-1, coordmat.shape[2])
-
-        return torch.from_numpy(coordmat.astype(np.float32)).to(self.device)
+        return torch.from_numpy(self.coordmat.astype(np.float32)).to(self.device)
     
