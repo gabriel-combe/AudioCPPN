@@ -62,13 +62,13 @@ def stft(sound: np.ndarray, fs: int, fps: int, wsize: int) -> np.ndarray:
 
     return np.stack(amplitudes).astype(np.float32)
         
-def preprocessAmplitudes(amplitudes: np.ndarray, gain: float) -> np.ndarray:
+def preprocessAmplitudes(amplitudes: np.ndarray, gains: np.ndarray) -> np.ndarray:
     # Compute the median values of the amplitudes
     medians = np.median(amplitudes, 0)
     medians[medians < EPSILON] = EPSILON
 
     # Normalize amplitudes with its median values
-    amplitudes = gain * amplitudes/medians
+    amplitudes = gains * amplitudes/medians
 
     # Set amplitudes to zero if too small
     amplitudes[amplitudes < 0.1] = 0.0

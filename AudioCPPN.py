@@ -10,10 +10,10 @@ from AudioProcessing import extractAudio, stft, preprocessAmplitudes
 from utils import createFolder, createVideo, getDevice
 from DatasetGenerator import AudioDataset
 from CPPNModel import CPPN, init_weights
-from args import get_opts
+from args import get_opts, heightmapfunc_dict
 
-AUDIOPATH = "audios/Dream_Fiction_-_Rhodz.mp3"
-VIDEOPATH = "videos/Dream_Fiction_-_Rhodz.mp4"
+AUDIOPATH = "audios/Asgretalos.mp3"
+VIDEOPATH = "videos/Asgretalos.mp4"
 
 FPS = 30
 WIDTH = 512
@@ -36,52 +36,74 @@ if __name__ == '__main__':
     width = args.width
     height = args.height
     fps = args.fps
+    path = ''
 
-    # Get the device on which to run the model
-    device = getDevice()
-
-    # Get the audio data from the audio file
-    sound, fs = extractAudio(audiopath)
-
-    # Extract the amplitudes (frequencies) of the audio
-    amplitudes = stft(sound, fs, fps, args.wsize)
-
-    # Cleanup the amplitudes
-    processedAmplitudes = preprocessAmplitudes(amplitudes, args.gain)
-
-    # Create the CPPN model
-    model = CPPN(device, processedAmplitudes.shape[1], args.nlayers, args.hsize, args.outsize)
+    if args.heightmapfunc in ['video', 'image'] and args.heightmap is not None:
+        path = args.heightmap
     
-    # Initialize weights randomly
-    model.apply(init_weights)
+    heightmapArray = heightmapfunc_dict[args.heightmapfunc](width, height, args.scale, path=path)
 
-    # Put the model on the device
-    model.to(device)
+    print(heightmapArray.shape)
 
-    # Generate the audio dataset
-    dataset = AudioDataset(processedAmplitudes, width, height, args.alpha, device)
+    # gains = np.array([
+    #     args.gainSubBass,
+    #     args.gainBass,
+    #     args.gainLowMidrange,
+    #     args.gainMidrange,
+    #     args.gainUpperMidrange,
+    #     args.gainPresence,
+    #     args.gainBrillance,
+    #     args.gainOverAudible
+    #     ])
+
+    # if args.gain is not None:
+    #     gains = np.ones(8) * args.gain
+
+    # # Get the device on which to run the model
+    # device = getDevice()
+
+    # # Get the audio data from the audio file
+    # sound, fs = extractAudio(audiopath)
+
+    # # Extract the amplitudes (frequencies) of the audio
+    # amplitudes = stft(sound, fs, fps, args.wsize)
+
+    # # Cleanup the amplitudes
+    # processedAmplitudes = preprocessAmplitudes(amplitudes, gains)
+
+    # # Create the CPPN model
+    # model = CPPN(device, processedAmplitudes.shape[1], args.nlayers, args.hsize, args.outsize)
     
-    # Create a dataloader with batch size data
-    dataloader = DataLoader(dataset, batch_size=args.batchsize)
+    # # Initialize weights randomly
+    # model.apply(init_weights)
 
-    # Create frames folder
-    createFolder()
+    # # Put the model on the device
+    # model.to(device)
 
-    nbFrame = 0
-
-    with torch.no_grad():
-        for data in tqdm(dataloader, desc='Generate Frames'):
-            result = model(data).cpu()
-
-            for res in result:
-                frame = res.numpy().reshape(height, width, -1).astype(np.uint8)
-                cv2.imshow('...', frame)
-                cv2.imwrite(f'frames/{nbFrame:06d}.png', frame)
-                cv2.waitKey(1)
-                nbFrame += 1
+    # # Generate the audio dataset
+    # dataset = AudioDataset(processedAmplitudes, args.scale, width, height, args.alpha, device)
     
-    cv2.destroyAllWindows()
+    # # Create a dataloader with batch size data
+    # dataloader = DataLoader(dataset, batch_size=args.batchsize)
 
-    # Create a video with ffmpeg using the frame sequence
-    createVideo(audiopath, videopath, fps, width, height)
+    # # Create frames folder
+    # createFolder()
+
+    # nbFrame = 0
+
+    # with torch.no_grad():
+    #     for data in tqdm(dataloader, desc='Generate Frames'):
+    #         result = model(data).cpu()
+
+    #         for res in result:
+    #             frame = res.numpy().reshape(height, width, -1).astype(np.uint8)
+    #             cv2.imshow('...', frame)
+    #             cv2.imwrite(f'frames/{nbFrame:06d}.png', frame)
+    #             cv2.waitKey(1)
+    #             nbFrame += 1
+    
+    # cv2.destroyAllWindows()
+
+    # # Create a video with ffmpeg using the frame sequence
+    # createVideo(audiopath, videopath, fps, width, height)
 
