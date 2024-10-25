@@ -4,13 +4,15 @@ import skvideo as skv
 
 # Normalize between -1 and 1
 def NormalizeNeg11(value):
-        return 2 * ((value - np.min(value)) / (np.max(value) - np.min(value))) - 1
+        print(np.min(value))
+        print(np.max(value))
+        return ((value - np.min(value)) / (np.max(value) - np.min(value)))
 
 
 # Cone Shape
-def ConeHM(width: int, height: int, scale: float, **kwargs) -> np.ndarray:
+def ConeHM(scale: float, **kwargs) -> np.ndarray:
         # Create a meshgrid between -1 and 1
-        xx, yy = np.meshgrid(np.linspace(-1, 1, width), np.linspace(-1, 1, height))
+        xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
         
         # Equation that drive the morphing of the CPPN
         zz = np.sqrt(xx**2 + yy**2)
@@ -24,9 +26,9 @@ def ConeHM(width: int, height: int, scale: float, **kwargs) -> np.ndarray:
 
 
 # 4 Cones Shape
-def Cone4HM(width: int, height: int, scale: float, **kwargs) -> np.ndarray:
+def Cone4HM(scale: float, **kwargs) -> np.ndarray:
         # Create a meshgrid between -1 and 1
-        xx, yy = np.meshgrid(np.linspace(-1, 1, width), np.linspace(-1, 1, height))
+        xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
 
         # Equation that drive the morphing of the CPPN
         zz = np.sqrt((xx + 0.5)**2 + (yy + 0.5)**2) \
@@ -41,3 +43,26 @@ def Cone4HM(width: int, height: int, scale: float, **kwargs) -> np.ndarray:
         zz *= scale
         return np.array([[yy, xx, zz]])
 
+
+# Video Height Maps
+def VideoHM(scale: float, **kwargs) -> np.ndarray:
+        # Create a meshgrid between -1 and 1
+        xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
+
+        # Get the heightmap image
+        zz = np.squeeze(kwargs['heightmap'], axis=3)
+        zz.astype(np.float16)
+
+        resultMorph = []
+
+        for frame in range(zz.shape[0]):
+                resultMorph.append(np.array([
+                        yy,
+                        xx,
+                        NormalizeNeg11(zz[frame]) * scale
+                ]))
+
+        print(resultMorph.shape)
+        print(resultMorph)
+
+        return np.array(resultMorph)

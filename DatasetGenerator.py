@@ -3,24 +3,23 @@ import numpy as np
 import torch
 
 class AudioDataset(Dataset):
-    def __init__(self, amplitudes: np.ndarray, heightMapArray: np.ndarray, scale: float, width: int, height: int, alpha: float, device):
+    def __init__(self, amplitudes: np.ndarray, heightMapArray: np.ndarray, width: int, height: int, alpha: float, device):
         self.device = device
         self.size = amplitudes.shape[0]
         self.width = width
         self.height = height
-        self.scale = scale
         self.alpha = alpha
         self.heightmap = heightMapArray
 
-        self.features = []
+        self.heightmapCount = self.heightmap.shape[0]
+        self.heightmap = self.heightmap.transpose(0, 2, 3, 1)
+        self.heightmap = self.heightmap.reshape(self.heightmapCount, -1, 3)
 
-        # heightMapFunc(scale=self.scale, width = self.width, height = self.height, heightMapArray = heightMapArray)
+        self.features = []
 
         self.coordmat = np.zeros((3+amplitudes.shape[1], self.height, self.width))
         self.coordmat = self.coordmat.transpose(1, 2, 0)
         self.coordmat = self.coordmat.reshape(-1, self.coordmat.shape[2])
-
-        self.coordmat[:, :3] = self.heightmap
 
         feature = amplitudes[0, :]
 
@@ -34,6 +33,7 @@ class AudioDataset(Dataset):
 
     def __getitem__(self, index):
 
+        self.coordmat[:, :3] = self.heightmap[min(index, self.heightmapCount-1)]
         self.coordmat[:, 3:] = self.features[index]
 
         return torch.from_numpy(self.coordmat.astype(np.float32)).to(self.device)

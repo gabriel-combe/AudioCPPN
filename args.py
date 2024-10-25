@@ -4,6 +4,8 @@ from HeightMapProcessing import *
 heightmapfunc_dict = {
     'cone' : ConeHM,
     '4cones' : Cone4HM,
+    'video' : VideoHM,
+    'image' : Cone4HM,
 }
 
 def get_opts():

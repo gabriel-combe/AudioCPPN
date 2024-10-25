@@ -37,7 +37,7 @@ def stft(sound: np.ndarray, fs: int, fps: int, wsize: int) -> np.ndarray:
     # Length of the audio (points)
     nSamples = len(sound)
 
-    stride = fs//fps
+    stride = round(fs/fps)
 
     # Amplitudes of each bands for each segments
     amplitudes = []

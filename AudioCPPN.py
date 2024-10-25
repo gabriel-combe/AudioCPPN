@@ -2,6 +2,7 @@ import cv2
 import torch
 import torchaudio
 import numpy as np
+import skvideo.io as skvio
 from tqdm import tqdm
 from typing import List
 from torch.utils.data import DataLoader
@@ -36,74 +37,75 @@ if __name__ == '__main__':
     width = args.width
     height = args.height
     fps = args.fps
-    path = ''
 
     if args.heightmapfunc in ['video', 'image'] and args.heightmap is not None:
-        path = args.heightmap
+        heightmap = skvio.vread(args.heightmap, as_grey = True)
+        width = heightmap.shape[2]
+        height = heightmap.shape[1]
+        fpsFrac = skvio.ffprobe(args.heightmap)['video']['@avg_frame_rate'].split('/')
+        fps = int(fpsFrac[0]) // int(fpsFrac[1])
     
-    heightmapArray = heightmapfunc_dict[args.heightmapfunc](width, height, args.scale, path=path)
+    heightmapArray = heightmapfunc_dict[args.heightmapfunc](args.scale, width=width, height=height, heightmap=heightmap)
 
-    print(heightmapArray.shape)
+    gains = np.array([
+        args.gainSubBass,
+        args.gainBass,
+        args.gainLowMidrange,
+        args.gainMidrange,
+        args.gainUpperMidrange,
+        args.gainPresence,
+        args.gainBrillance,
+        args.gainOverAudible
+        ])
 
-    # gains = np.array([
-    #     args.gainSubBass,
-    #     args.gainBass,
-    #     args.gainLowMidrange,
-    #     args.gainMidrange,
-    #     args.gainUpperMidrange,
-    #     args.gainPresence,
-    #     args.gainBrillance,
-    #     args.gainOverAudible
-    #     ])
+    if args.gain is not None:
+        gains = np.ones(8) * args.gain
 
-    # if args.gain is not None:
-    #     gains = np.ones(8) * args.gain
+    # Get the device on which to run the model
+    device = getDevice()
 
-    # # Get the device on which to run the model
-    # device = getDevice()
+    # Get the audio data from the audio file
+    sound, fs = extractAudio(audiopath)
 
-    # # Get the audio data from the audio file
-    # sound, fs = extractAudio(audiopath)
+    # Extract the amplitudes (frequencies) of the audio
+    amplitudes = stft(sound, fs, fps, args.wsize)
 
-    # # Extract the amplitudes (frequencies) of the audio
-    # amplitudes = stft(sound, fs, fps, args.wsize)
+    # Cleanup the amplitudes
+    processedAmplitudes = preprocessAmplitudes(amplitudes, gains)
 
-    # # Cleanup the amplitudes
-    # processedAmplitudes = preprocessAmplitudes(amplitudes, gains)
-
-    # # Create the CPPN model
-    # model = CPPN(device, processedAmplitudes.shape[1], args.nlayers, args.hsize, args.outsize)
+    # Create the CPPN model
+    model = CPPN(device, processedAmplitudes.shape[1], args.nlayers, args.hsize, args.outsize)
     
-    # # Initialize weights randomly
-    # model.apply(init_weights)
+    # Initialize weights randomly
+    model.apply(init_weights)
 
-    # # Put the model on the device
-    # model.to(device)
+    # Put the model on the device
+    model.to(device)
 
-    # # Generate the audio dataset
-    # dataset = AudioDataset(processedAmplitudes, args.scale, width, height, args.alpha, device)
+    # Generate the audio dataset
+    dataset = AudioDataset(processedAmplitudes, heightmapArray, width, height, args.alpha, device)
     
-    # # Create a dataloader with batch size data
-    # dataloader = DataLoader(dataset, batch_size=args.batchsize)
+    # Create a dataloader with batch size data
+    dataloader = DataLoader(dataset, batch_size=args.batchsize)
 
-    # # Create frames folder
-    # createFolder()
+    # Create frames folder
+    createFolder()
 
-    # nbFrame = 0
+    nbFrame = 0
 
-    # with torch.no_grad():
-    #     for data in tqdm(dataloader, desc='Generate Frames'):
-    #         result = model(data).cpu()
+    with torch.no_grad():
+        for data in tqdm(dataloader, desc='Generate Frames'):
+            result = model(data).cpu()
 
-    #         for res in result:
-    #             frame = res.numpy().reshape(height, width, -1).astype(np.uint8)
-    #             cv2.imshow('...', frame)
-    #             cv2.imwrite(f'frames/{nbFrame:06d}.png', frame)
-    #             cv2.waitKey(1)
-    #             nbFrame += 1
+            for res in result:
+                frame = res.numpy().reshape(height, width, -1).astype(np.uint8)
+                cv2.imshow('...', frame)
+                cv2.imwrite(f'frames/{nbFrame:06d}.png', frame)
+                cv2.waitKey(1)
+                nbFrame += 1
     
-    # cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
-    # # Create a video with ffmpeg using the frame sequence
-    # createVideo(audiopath, videopath, fps, width, height)
+    # Create a video with ffmpeg using the frame sequence
+    createVideo(audiopath, videopath, fps, width, height)
 
