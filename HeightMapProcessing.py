@@ -1,16 +1,15 @@
 import cv2
 import numpy as np
 import skvideo as skv
+from typing import Tuple
 
 # Normalize between -1 and 1
 def NormalizeNeg11(value):
-        print(np.min(value))
-        print(np.max(value))
         return ((value - np.min(value)) / (np.max(value) - np.min(value)))
 
 
 # Cone Shape
-def ConeHM(scale: float, **kwargs) -> np.ndarray:
+def ConeHM(scale: float, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Create a meshgrid between -1 and 1
         xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
         
@@ -22,11 +21,12 @@ def ConeHM(scale: float, **kwargs) -> np.ndarray:
 
         # Scale Z axis
         zz *= scale
-        return np.array([[yy, xx, zz]])
+
+        return (yy[np.newaxis], xx[np.newaxis], zz[np.newaxis])
 
 
 # 4 Cones Shape
-def Cone4HM(scale: float, **kwargs) -> np.ndarray:
+def Cone4HM(scale: float, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Create a meshgrid between -1 and 1
         xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
 
@@ -41,11 +41,12 @@ def Cone4HM(scale: float, **kwargs) -> np.ndarray:
 
         # Scale Z axis
         zz *= scale
-        return np.array([[yy, xx, zz]])
+
+        return (yy[np.newaxis], xx[np.newaxis], zz[np.newaxis])
 
 
 # Video Height Maps
-def VideoHM(scale: float, **kwargs) -> np.ndarray:
+def VideoHM(scale: float, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Create a meshgrid between -1 and 1
         xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))
 
@@ -53,16 +54,11 @@ def VideoHM(scale: float, **kwargs) -> np.ndarray:
         zz = np.squeeze(kwargs['heightmap'], axis=3)
         zz.astype(np.float16)
 
-        resultMorph = []
-
+        # Normalize Z axis between -1 and 1
         for frame in range(zz.shape[0]):
-                resultMorph.append(np.array([
-                        yy,
-                        xx,
-                        NormalizeNeg11(zz[frame]) * scale
-                ]))
+                zz[frame] = NormalizeNeg11(zz[frame]) * scale
 
-        print(resultMorph.shape)
-        print(resultMorph)
+        # Scale Z axis
+        # zz *= scale
 
-        return np.array(resultMorph)
+        return (yy[np.newaxis], xx[np.newaxis], zz)

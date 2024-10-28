@@ -45,7 +45,7 @@ if __name__ == '__main__':
         fpsFrac = skvio.ffprobe(args.heightmap)['video']['@avg_frame_rate'].split('/')
         fps = int(fpsFrac[0]) // int(fpsFrac[1])
     
-    heightmapArray = heightmapfunc_dict[args.heightmapfunc](args.scale, width=width, height=height, heightmap=heightmap)
+    heightmapTuple = heightmapfunc_dict[args.heightmapfunc](args.scale, width=width, height=height, heightmap=heightmap)
 
     gains = np.array([
         args.gainSubBass,
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     model.to(device)
 
     # Generate the audio dataset
-    dataset = AudioDataset(processedAmplitudes, heightmapArray, width, height, args.alpha, device)
+    dataset = AudioDataset(processedAmplitudes, heightmapTuple, width, height, args.alpha, device)
     
     # Create a dataloader with batch size data
     dataloader = DataLoader(dataset, batch_size=args.batchsize)
