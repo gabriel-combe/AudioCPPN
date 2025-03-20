@@ -5,7 +5,7 @@ heightmapfunc_dict = {
     'cone' : ConeHM,
     '4cones' : Cone4HM,
     'video' : VideoHM,
-    'image' : Cone4HM,
+    'image' : VideoHM,
 }
 
 def get_opts():

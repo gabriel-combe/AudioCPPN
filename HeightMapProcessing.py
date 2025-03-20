@@ -45,7 +45,7 @@ def Cone4HM(scale: float, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
         return (yy[np.newaxis], xx[np.newaxis], zz[np.newaxis])
 
 
-# Video Height Maps
+# Video/Image Height Maps
 def VideoHM(scale: float, **kwargs) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Create a meshgrid between -1 and 1
         xx, yy = np.meshgrid(np.linspace(-1, 1, kwargs['width']), np.linspace(-1, 1, kwargs['height']))

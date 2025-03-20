@@ -8,7 +8,7 @@ from typing import List
 from torch.utils.data import DataLoader
 
 from AudioProcessing import extractAudio, stft, preprocessAmplitudes
-from utils import createFolder, createVideo, getDevice
+from utils import createFolder, createVideo, getDevice, plotFreqAmp
 from DatasetGenerator import AudioDataset
 from CPPNModel import CPPN, init_weights
 from args import get_opts, heightmapfunc_dict
@@ -37,6 +37,7 @@ if __name__ == '__main__':
     width = args.width
     height = args.height
     fps = args.fps
+    heightmap = None
 
     if args.heightmapfunc in ['video', 'image'] and args.heightmap is not None:
         heightmap = skvio.vread(args.heightmap, as_grey = True)
@@ -70,8 +71,15 @@ if __name__ == '__main__':
     # Extract the amplitudes (frequencies) of the audio
     amplitudes = stft(sound, fs, fps, args.wsize)
 
+    # Plot Amplitudes
+    plotFreqAmp(amplitudes)
+    print(amplitudes.mean(axis=0))
+
     # Cleanup the amplitudes
     processedAmplitudes = preprocessAmplitudes(amplitudes, gains)
+
+    # Plot Processed Amplitudes
+    plotFreqAmp(amplitudes)
 
     # Create the CPPN model
     model = CPPN(device, processedAmplitudes.shape[1], args.nlayers, args.hsize, args.outsize)

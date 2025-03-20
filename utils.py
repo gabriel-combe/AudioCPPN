@@ -1,6 +1,8 @@
 import os
 import torch
 import shutil
+import numpy as np
+import matplotlib.pyplot as plt
 
 def createFolder() -> None:
     if os.path.exists('frames'):
@@ -24,3 +26,8 @@ def getDevice():
     print ('Current cuda device ID ', torch.cuda.current_device())
 
     return device
+
+def plotFreqAmp(freqamp: np.ndarray) -> None:
+    plt.plot(freqamp, label=["Sub-bass", "Bass", "Low midrange", "Midrange", "Upper midrange", "Presence", "Brilliance", "Over audible"])
+    plt.legend()
+    plt.show()
